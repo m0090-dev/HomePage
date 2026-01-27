@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -9,27 +10,48 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #e0e0e0;
-  overflow-x: hidden;
+  overflow: hidden;
+  background: #dcdcdc;
+}
+
+/* ===== 3D背景キャンバス ===== */
+#bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* ===== ガラス風UI共通 ===== */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
 }
 
 /* ===== メイン表示アニメーション ===== */
 .main {
+  position: relative;
+  z-index: 1;
   opacity: 0;
-  transform: translateX(100px);
-  animation: slideFade 1s ease-out forwards;
+  transform: translateX(80px);
+  animation: slideFade 1.2s ease-out forwards;
   text-align: center;
-  margin-top: 120px;
+  margin: 120px auto;
+  padding: 40px;
+  width: 90%;
+  max-width: 500px;
 }
 
 @keyframes slideFade {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-/* ===== ハンバーガーボタン ===== */
+/* ===== ハンバーガー ===== */
 .menu-btn {
   position: fixed;
   top: 20px;
@@ -37,7 +59,7 @@ body {
   width: 35px;
   height: 25px;
   cursor: pointer;
-  z-index: 1001;
+  z-index: 2;
 }
 
 .menu-btn span {
@@ -46,21 +68,18 @@ body {
   margin: 5px 0;
   background: #444;
   border-radius: 2px;
-  transition: 0.3s;
 }
 
 /* ===== サイドメニュー ===== */
 .side-menu {
   position: fixed;
   top: 0;
-  right: -250px;
-  width: 250px;
+  right: -260px;
+  width: 260px;
   height: 100%;
-  background: #bdbdbd;
-  box-shadow: -3px 0 10px rgba(0,0,0,0.2);
   padding-top: 80px;
   transition: right 0.4s ease;
-  z-index: 1000;
+  z-index: 2;
 }
 
 .side-menu a {
@@ -69,44 +88,77 @@ body {
   color: #222;
   text-decoration: none;
   font-size: 18px;
-  transition: background 0.2s;
 }
 
-.side-menu a:hover {
-  background: #9e9e9e;
-}
+.side-menu.open { right: 0; }
 
-/* 開いた状態 */
-.side-menu.open {
-  right: 0;
+/* モバイル最適化 */
+@media (max-width: 600px) {
+  .main { margin-top: 100px; padding: 25px; }
 }
 </style>
 </head>
 
 <body>
 
-<!-- ハンバーガーメニュー -->
+<canvas id="bg"></canvas>
+
 <div class="menu-btn" onclick="toggleMenu()">
-  <span></span>
-  <span></span>
-  <span></span>
+  <span></span><span></span><span></span>
 </div>
 
-<!-- サイドメニュー -->
-<div id="menu" class="side-menu">
+<div id="menu" class="side-menu glass">
   <a href="#">Top</a>
 </div>
 
-<!-- メインコンテンツ -->
-<div class="main">
+<div class="main glass">
   <h1>My GitHub Page</h1>
   <p>Welcome</p>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
 <script>
 function toggleMenu() {
   document.getElementById("menu").classList.toggle("open");
 }
+
+// ===== Three.js 背景 =====
+const canvas = document.getElementById('bg');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+camera.position.z = 5;
+
+// ライト
+const light = new THREE.PointLight(0xffffff, 1);
+light.position.set(5,5,5);
+scene.add(light);
+
+// ボール
+const geometry = new THREE.SphereGeometry(1, 32, 32);
+const material = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.4, roughness: 0.3 });
+const sphere = new THREE.Mesh(geometry, material);
+scene.add(sphere);
+
+// 振り子パラメータ
+let time = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  time += 0.01; // 速度（小さいほどゆっくり）
+  sphere.position.x = Math.sin(time) * 2; // 左右揺れ
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// リサイズ対応
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 </script>
 
 </body>
