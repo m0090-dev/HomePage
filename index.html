@@ -14,7 +14,6 @@ body {
   background: #dcdcdc;
 }
 
-/* ===== 3D背景キャンバス ===== */
 #bg {
   position: fixed;
   top: 0;
@@ -24,7 +23,19 @@ body {
   z-index: 0;
 }
 
-/* ===== ガラス風UI共通 ===== */
+/* クリック用オーバーレイ（メニュー開時のみ有効） */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 1;
+  display: none;
+}
+
+#overlay.active {
+  display: block;
+}
+
 .glass {
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
@@ -33,10 +44,9 @@ body {
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
 }
 
-/* ===== メイン表示アニメーション ===== */
 .main {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   opacity: 0;
   transform: translateX(80px);
   animation: slideFade 1.2s ease-out forwards;
@@ -51,7 +61,6 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* ===== ハンバーガー ===== */
 .menu-btn {
   position: fixed;
   top: 20px;
@@ -59,7 +68,7 @@ body {
   width: 35px;
   height: 25px;
   cursor: pointer;
-  z-index: 2;
+  z-index: 3;
 }
 
 .menu-btn span {
@@ -70,7 +79,6 @@ body {
   border-radius: 2px;
 }
 
-/* ===== サイドメニュー ===== */
 .side-menu {
   position: fixed;
   top: 0;
@@ -79,7 +87,7 @@ body {
   height: 100%;
   padding-top: 80px;
   transition: right 0.4s ease;
-  z-index: 2;
+  z-index: 3;
 }
 
 .side-menu a {
@@ -92,7 +100,6 @@ body {
 
 .side-menu.open { right: 0; }
 
-/* モバイル最適化 */
 @media (max-width: 600px) {
   .main { margin-top: 100px; padding: 25px; }
 }
@@ -102,8 +109,9 @@ body {
 <body>
 
 <canvas id="bg"></canvas>
+<div id="overlay" onclick="closeMenu()"></div>
 
-<div class="menu-btn" onclick="toggleMenu()">
+<div class="menu-btn" onclick="toggleMenu(event)">
   <span></span><span></span><span></span>
 </div>
 
@@ -118,11 +126,21 @@ body {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
 <script>
-function toggleMenu() {
-  document.getElementById("menu").classList.toggle("open");
+const menu = document.getElementById("menu");
+const overlay = document.getElementById("overlay");
+
+function toggleMenu(e) {
+  e.stopPropagation();
+  menu.classList.toggle("open");
+  overlay.classList.toggle("active");
 }
 
-// ===== Three.js 背景 =====
+function closeMenu() {
+  menu.classList.remove("open");
+  overlay.classList.remove("active");
+}
+
+// ===== Three.js =====
 const canvas = document.getElementById('bg');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -130,30 +148,25 @@ const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.z = 5;
 
-// ライト
 const light = new THREE.PointLight(0xffffff, 1);
 light.position.set(5,5,5);
 scene.add(light);
 
-// ボール
 const geometry = new THREE.SphereGeometry(1, 32, 32);
 const material = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.4, roughness: 0.3 });
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
-// 振り子パラメータ
 let time = 0;
 
 function animate() {
   requestAnimationFrame(animate);
-  time += 0.01; // 速度（小さいほどゆっくり）
-  sphere.position.x = Math.sin(time) * 2; // 左右揺れ
+  time += 0.02;            // 速度アップ
+  sphere.position.z = Math.sin(time) * 2;  // 奥⇄手前の振り子
   renderer.render(scene, camera);
 }
-
 animate();
 
-// リサイズ対応
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
