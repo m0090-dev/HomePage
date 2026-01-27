@@ -10,57 +10,20 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  overflow: hidden;
-  background: #dcdcdc;
+  background: linear-gradient(#e0e0e0, #cfcfcf);
+  color: #222;
 }
 
-#bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-/* クリック用オーバーレイ（メニュー開時のみ有効） */
-#overlay {
-  position: fixed;
-  inset: 0;
-  background: transparent;
-  z-index: 1;
-  display: none;
-}
-
-#overlay.active {
-  display: block;
-}
-
+/* ===== ガラスUI ===== */
 .glass {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255,255,255,0.25);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
 }
 
-.main {
-  position: relative;
-  z-index: 2;
-  opacity: 0;
-  transform: translateX(80px);
-  animation: slideFade 1.2s ease-out forwards;
-  text-align: center;
-  margin: 120px auto;
-  padding: 40px;
-  width: 90%;
-  max-width: 500px;
-}
-
-@keyframes slideFade {
-  to { opacity: 1; transform: translateX(0); }
-}
-
+/* ===== ハンバーガー ===== */
 .menu-btn {
   position: fixed;
   top: 20px;
@@ -68,9 +31,8 @@ body {
   width: 35px;
   height: 25px;
   cursor: pointer;
-  z-index: 3;
+  z-index: 10;
 }
-
 .menu-btn span {
   display: block;
   height: 4px;
@@ -87,9 +49,9 @@ body {
   height: 100%;
   padding-top: 80px;
   transition: right 0.4s ease;
-  z-index: 3;
+  z-index: 9;
 }
-
+.side-menu.open { right: 0; }
 .side-menu a {
   display: block;
   padding: 15px 25px;
@@ -98,20 +60,43 @@ body {
   font-size: 18px;
 }
 
-.side-menu.open { right: 0; }
+/* ===== セクション ===== */
+.section {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== タイトル物理アニメーション ===== */
+.title {
+  font-size: 40px;
+  opacity: 0;
+  transform: translateY(-300px);
+}
+
+/* 発火後 */
+.title.show {
+  animation: dropBounce 1.4s cubic-bezier(.25,.8,.25,1) forwards;
+}
+
+@keyframes dropBounce {
+  0%   { opacity: 0; transform: translateY(-300px); }
+  60%  { opacity: 1; transform: translateY(20px); }   /* 落下 */
+  75%  { transform: translateY(-10px); }               /* 反発 */
+  90%  { transform: translateY(5px); }                 /* 減衰 */
+  100% { transform: translateY(0); }                   /* 静止 */
+}
 
 @media (max-width: 600px) {
-  .main { margin-top: 100px; padding: 25px; }
+  .title { font-size: 28px; }
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="bg"></canvas>
-<div id="overlay" onclick="closeMenu()"></div>
-
-<div class="menu-btn" onclick="toggleMenu(event)">
+<div class="menu-btn" onclick="toggleMenu()">
   <span></span><span></span><span></span>
 </div>
 
@@ -119,59 +104,38 @@ body {
   <a href="#">Top</a>
 </div>
 
-<div class="main glass">
-  <h1>My GitHub Page</h1>
-  <p>Welcome</p>
+<!-- 上部ダミーセクション -->
+<div class="section">
+  <h2>Scroll Down</h2>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<!-- タイトル表示セクション -->
+<div class="section glass">
+  <div id="mainTitle" class="title">My GitHub Page</div>
+</div>
+
+<!-- 下部ダミー -->
+<div class="section">
+  <h2>More Content</h2>
+</div>
+
 <script>
-const menu = document.getElementById("menu");
-const overlay = document.getElementById("overlay");
-
-function toggleMenu(e) {
-  e.stopPropagation();
-  menu.classList.toggle("open");
-  overlay.classList.toggle("active");
+function toggleMenu() {
+  document.getElementById("menu").classList.toggle("open");
 }
 
-function closeMenu() {
-  menu.classList.remove("open");
-  overlay.classList.remove("active");
-}
+// スクロール検知 → 表示
+const title = document.getElementById("mainTitle");
 
-// ===== Three.js =====
-const canvas = document.getElementById('bg');
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-camera.position.z = 5;
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      title.classList.add("show");
+    }
+  });
+}, { threshold: 0.6 });
 
-const light = new THREE.PointLight(0xffffff, 1);
-light.position.set(5,5,5);
-scene.add(light);
-
-const geometry = new THREE.SphereGeometry(1, 32, 32);
-const material = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.4, roughness: 0.3 });
-const sphere = new THREE.Mesh(geometry, material);
-scene.add(sphere);
-
-let time = 0;
-
-function animate() {
-  requestAnimationFrame(animate);
-  time += 0.02;            // 速度アップ
-  sphere.position.z = Math.sin(time) * 2;  // 奥⇄手前の振り子
-  renderer.render(scene, camera);
-}
-animate();
-
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+observer.observe(title);
 </script>
 
 </body>
