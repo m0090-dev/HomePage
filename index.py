@@ -51,6 +51,7 @@ def scan():
 
     return data
 
+
 def make_detail_page(item):
     html = f"""
 <!DOCTYPE html>
@@ -68,6 +69,7 @@ body {{
   color:#fff;
 }}
 
+/* ===== 画像領域 ===== */
 #wrap {{
   width:100vw;
   height:100vh;
@@ -82,7 +84,7 @@ body {{
   transform-origin:center;
 }}
 
-/* UI */
+/* ===== UI ===== */
 .toolbar {{
   position:fixed;
   top:10px;
@@ -95,6 +97,7 @@ body {{
   flex-direction:column;
   gap:6px;
   width:220px;
+  box-sizing:border-box;
 }}
 
 .toolbar.hidden {{
@@ -132,6 +135,30 @@ button:hover {{
   line-height:1.4;
   opacity:0.9;
   margin-bottom:6px;
+}}
+
+/* ===== モバイル最適化 ===== */
+@media (max-width: 768px) {{
+
+  .toolbar {{
+    width: 85vw;
+    left: 7.5vw;
+    padding: 14px;
+  }}
+
+  button {{
+    padding: 12px;
+    font-size: 14px;
+  }}
+
+  .info {{
+    font-size: 14px;
+  }}
+
+  .toggle {{
+    padding: 12px;
+    font-size: 14px;
+  }}
 }}
 </style>
 </head>
@@ -174,18 +201,18 @@ const wrap = document.getElementById("wrap");
 const ui = document.getElementById("ui");
 const info = document.getElementById("info");
 
-/* ------------------------
+/* =========================
    画像情報
------------------------- */
+========================= */
 img.onload = () => {{
   info.innerHTML =
     "file: {item['name']}<br>" +
     "size: " + img.naturalWidth + " x " + img.naturalHeight;
 }};
 
-/* ------------------------
+/* =========================
    更新
------------------------- */
+========================= */
 function update() {{
   img.style.transform =
     `translate(${{pos.x}}px, ${{pos.y}}px)
@@ -195,9 +222,9 @@ function update() {{
      scaleY(${{fy}})`;
 }}
 
-/* ------------------------
+/* =========================
    操作
------------------------- */
+========================= */
 function zoom(v) {{
   scale *= v;
   update();
@@ -239,9 +266,9 @@ function toggleFull() {{
   }}
 }}
 
-/* ------------------------
-   ドラッグ
------------------------- */
+/* =========================
+   マウスドラッグ
+========================= */
 wrap.addEventListener("mousedown", e => {{
   dragging = true;
   wrap.style.cursor = "grabbing";
@@ -263,18 +290,18 @@ window.addEventListener("mousemove", e => {{
   update();
 }});
 
-/* ------------------------
+/* =========================
    ホイールズーム
------------------------- */
+========================= */
 window.addEventListener("wheel", e => {{
   const z = e.deltaY < 0 ? 1.1 : 0.9;
   scale *= z;
   update();
 }});
 
-/* ------------------------
+/* =========================
    キーボード
------------------------- */
+========================= */
 const files = {json.dumps(sorted(os.listdir(BASE)))};
 
 let current = files.indexOf("{item['name']}");
@@ -293,9 +320,9 @@ function navigate(dir) {{
   window.location = "../pages/" + files[current] + ".html";
 }}
 
-/* ------------------------
-   タッチ
------------------------- */
+/* =========================
+   タッチ（モバイル改善版）
+========================= */
 let touches = [];
 
 window.addEventListener("touchstart", e => {{
@@ -304,15 +331,17 @@ window.addEventListener("touchstart", e => {{
 
 window.addEventListener("touchmove", e => {{
   if (e.touches.length == 1) {{
+
     let t = e.touches[0];
 
-    pos.x += t.clientX - (touches[0]?.clientX || 0);
-    pos.y += t.clientY - (touches[0]?.clientY || 0);
+    pos.x += (t.clientX - (touches[0]?.clientX || 0)) * 1.2;
+    pos.y += (t.clientY - (touches[0]?.clientY || 0)) * 1.2;
 
     update();
   }}
 
   if (e.touches.length == 2) {{
+
     let dx = e.touches[0].clientX - e.touches[1].clientX;
     let dy = e.touches[0].clientY - e.touches[1].clientY;
     let dist = Math.sqrt(dx*dx + dy*dy);
@@ -328,6 +357,20 @@ window.addEventListener("touchmove", e => {{
   touches = e.touches;
 }});
 
+/* =========================
+   ダブルタップズーム
+========================= */
+let lastTap = 0;
+
+window.addEventListener("touchend", e => {{
+  const now = Date.now();
+  if (now - lastTap < 300) {{
+    scale *= 1.2;
+    update();
+  }}
+  lastTap = now;
+}});
+
 update();
 </script>
 
@@ -338,7 +381,6 @@ update();
     path = f"{OUT_DIR}/{item['name']}.html"
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
-
 
 
 # ----------------------------
