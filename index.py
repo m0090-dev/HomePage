@@ -83,7 +83,7 @@ def build_index(data):
 <html>
 <head>
 <meta charset="UTF-8">
-<title>2DCG CMS</title>
+<title>Viewer</title>
 
 <style>
 body {{
