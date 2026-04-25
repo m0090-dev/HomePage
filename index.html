@@ -1,83 +1,39 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>File Viewer</title>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(#e0e0e0, #cfcfcf);
-  color: #222;
+  font-family: Arial;
+  background: #ddd;
 }
-
-.glass {
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-}
-
-.menu-btn {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 35px;
-  height: 25px;
-  cursor: pointer;
-  z-index: 10;
-}
-.menu-btn span {
-  display: block;
-  height: 4px;
-  margin: 5px 0;
-  background: #444;
-}
-
-.side-menu {
-  position: fixed;
-  top: 0;
-  right: -260px;
-  width: 260px;
-  height: 100%;
-  padding-top: 80px;
-  transition: right 0.4s;
-}
-.side-menu.open { right: 0; }
 
 .container {
   display: flex;
   height: 100vh;
 }
 
-/* ファイル一覧 */
 .file-list {
   width: 250px;
   overflow-y: auto;
+  background: rgba(255,255,255,0.3);
   padding: 10px;
 }
 
 .file-item {
   padding: 10px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-}
-.file-item:hover {
-  background: rgba(0,0,0,0.1);
+  border-bottom: 1px solid #ccc;
 }
 
-/* ビュー */
 .viewer {
   flex: 1;
   padding: 20px;
   overflow: auto;
-}
-
-pre {
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 
 img {
@@ -88,62 +44,37 @@ img {
 
 <body>
 
-<div class="menu-btn" onclick="toggleMenu()">
-  <span></span><span></span><span></span>
-</div>
-
-<div id="menu" class="side-menu glass">
-  <a href="#">Top</a>
-</div>
-
 <div class="container">
-  <div id="fileList" class="file-list glass"></div>
-  <div id="viewer" class="viewer glass">
-    Select a file
-  </div>
+  <div id="list" class="file-list"></div>
+  <div id="viewer" class="viewer">Select file</div>
 </div>
 
 <script>
-function toggleMenu() {
-  document.getElementById("menu").classList.toggle("open");
-}
+const files = [{"name": "test.txt", "path": "files/test.txt"}];
 
-/* ===== ファイル一覧（ここを編集する） ===== */
-const files = [
-  { name: "sample.txt", path: "files/sample.txt" },
-  { name: "image.png", path: "files/image.png" }
-];
-
-/* ===== 一覧表示 ===== */
-const list = document.getElementById("fileList");
+const list = document.getElementById("list");
 const viewer = document.getElementById("viewer");
 
-files.forEach(file => {
+files.forEach(f => {
   const div = document.createElement("div");
   div.className = "file-item";
-  div.textContent = file.name;
+  div.textContent = f.name;
 
   div.onclick = async () => {
-    loadFile(file);
+    const ext = f.name.split('.').pop().toLowerCase();
+
+    if (["png","jpg","jpeg","gif","webp"].includes(ext)) {
+      viewer.innerHTML = `<img src="${f.path}">`;
+    } else {
+      const res = await fetch(f.path);
+      const text = await res.text();
+      viewer.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
+    }
   };
 
   list.appendChild(div);
 });
 
-/* ===== ファイル読み込み ===== */
-async function loadFile(file) {
-  const ext = file.name.split(".").pop().toLowerCase();
-
-  if (["png","jpg","jpeg","gif","webp"].includes(ext)) {
-    viewer.innerHTML = `<img src="${file.path}">`;
-  } else {
-    const res = await fetch(file.path);
-    const text = await res.text();
-    viewer.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
-  }
-}
-
-/* XSS対策 */
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, m => ({
     '&':'&amp;',
