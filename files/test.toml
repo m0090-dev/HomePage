@@ -1,0 +1,17 @@
+[configs]
+description = "Whitespace Preservation Test (Visible Mode)"
+[envs]
+B = "VALUE"
+CASE_01 = "Result: X"
+CASE_02 = " A ${B} C "
+CASE_03 = "  leading and trailing  "
+CASE_04 = " ${B} "
+CASE_05 = "prefix ${B} suffix"
+CASE_06 = " ${CASE_01} prefix ${B} suffix "
+CASE_07 = "  VALUE  "
+[program]
+path = "bash"
+args = [
+  "-c",
+  "env | grep '^CASE_' | sort | sed 's/ /\\x1b[31m·\\x1b[0m/g'"
+]

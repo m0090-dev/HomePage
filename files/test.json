@@ -1,0 +1,34 @@
+{
+  "configs": [
+    {
+      "description": "Full Integration Test (JSON) for Linux/Bash"
+    }
+  ],
+  "envs": [
+    {
+      "APP_NAME": "eec-json-service"
+    },
+    {
+      "APP_HOME": "/home/user/services/${APP_NAME}"
+    },
+    {
+      "DEPLOY_TAG": "v1.0.0-$(hostname)"
+    },
+    {
+      "PATH": [
+        "${APP_HOME}/bin",
+        "/usr/local/bin"
+      ]
+    }
+  ],
+  "program": {
+    "path": "bash",
+    "args": [
+      "-c",
+      "echo \"--- App Environment ---\"; env | grep -E 'APP_|DEPLOY_TAG'; echo \"--- Path ---\"; echo $PATH"
+    ]
+  }
+}
+
+
+

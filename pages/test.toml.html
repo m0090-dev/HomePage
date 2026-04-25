@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>test.toml</title>
+
+<style>
+body {
+  margin:0;
+  background:#111;
+  font-family:sans-serif;
+  color:#fff;
+}
+
+.toolbar {
+  position:fixed;
+  top:10px;
+  left:10px;
+  z-index:9999;
+  background:rgba(30,30,30,0.95);
+  padding:10px;
+  border-radius:8px;
+  width:240px;
+}
+
+button {
+  background:#333;
+  color:#fff;
+  border:none;
+  padding:8px;
+  margin:2px 0;
+  width:100%;
+  cursor:pointer;
+}
+
+.info {
+  font-size:12px;
+  margin-bottom:8px;
+  word-break:break-all;
+}
+
+#wrap {
+  width:100vw;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+}
+
+#img {
+  max-width:none;
+  transform-origin:center;
+}
+
+pre {
+  white-space:pre-wrap;
+  word-break:break-word;
+  padding:20px;
+}
+
+.copyBtn {
+  position:fixed;
+  bottom:10px;
+  right:10px;
+  background:#444;
+  padding:10px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="toolbar">
+  <div class="info">test.toml</div>
+</div>
+
+<pre id="text"></pre>
+<div class="copyBtn" onclick="copyText()">COPY</div>
+
+<script>
+fetch("../files/test.toml")
+.then(r=>r.text())
+.then(t=>document.getElementById("text").textContent=t);
+
+function copyText(){
+  navigator.clipboard.writeText(
+    document.getElementById("text").textContent
+  );
+}
+</script>
+
+</body>
+</html>
