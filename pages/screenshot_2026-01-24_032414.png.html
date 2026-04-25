@@ -4,22 +4,141 @@
 <head>
 <meta charset="UTF-8">
 <title>screenshot_2026-01-24_032414.png</title>
+
 <style>
 body {
   margin:0;
   background:#111;
+  overflow:hidden;
+}
+
+#wrap {
+  width:100vw;
+  height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
+  cursor:grab;
 }
-img {
-  max-width:90%;
-  max-height:90%;
+
+#img {
+  max-width:none;
+  transform-origin:center;
+}
+
+.toolbar {
+  position:fixed;
+  top:10px;
+  left:10px;
+  background:#222;
+  padding:10px;
+  display:flex;
+  gap:6px;
+  border-radius:8px;
+}
+
+button {
+  padding:6px 10px;
+  background:#333;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
+button:hover {
+  background:#555;
 }
 </style>
 </head>
+
 <body>
-<img src="../files/images/screenshot_2026-01-24_032414.png">
+
+<div class="toolbar">
+  <button onclick="zoom(1.1)">＋</button>
+  <button onclick="zoom(0.9)">－</button>
+  <button onclick="rotate(90)">↻</button>
+  <button onclick="flipX()">↔</button>
+  <button onclick="flipY()">↕</button>
+  <button onclick="reset()">Reset</button>
+</div>
+
+<div id="wrap">
+  <img id="img" src="../files/images/screenshot_2026-01-24_032414.png">
+</div>
+
+<script>
+let scale = 1;
+let rot = 0;
+let fx = 1;
+let fy = 1;
+
+let pos = {x:0,y:0};
+let dragging = false;
+let last = {x:0,y:0};
+
+const img = document.getElementById("img");
+const wrap = document.getElementById("wrap");
+
+function update() {
+  img.style.transform =
+    `translate(${pos.x}px, ${pos.y}px)
+     scale(${scale})
+     rotate(${rot}deg)
+     scaleX(${fx})
+     scaleY(${fy})`;
+}
+
+function zoom(v) {
+  scale *= v;
+  update();
+}
+
+function rotate(v) {
+  rot += v;
+  update();
+}
+
+function flipX() {
+  fx *= -1;
+  update();
+}
+
+function flipY() {
+  fy *= -1;
+  update();
+}
+
+function reset() {
+  scale = 1;
+  rot = 0;
+  fx = 1;
+  fy = 1;
+  pos = {x:0,y:0};
+  update();
+}
+
+wrap.addEventListener("mousedown", e => {
+  dragging = true;
+  wrap.style.cursor = "grabbing";
+  last = {x:e.clientX, y:e.clientY};
+});
+
+window.addEventListener("mouseup", () => {
+  dragging = false;
+  wrap.style.cursor = "grab";
+});
+
+window.addEventListener("mousemove", e => {
+  if (!dragging) return;
+
+  pos.x += e.clientX - last.x;
+  pos.y += e.clientY - last.y;
+
+  last = {x:e.clientX, y:e.clientY};
+  update();
+});
+
+update();
+</script>
+
 </body>
 </html>

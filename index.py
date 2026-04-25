@@ -7,20 +7,30 @@ THUMB = "files/thumbs"
 OUT_INDEX = "index.html"
 OUT_DIR = "pages"
 
-IMAGE_EXT = {"png","jpg","jpeg","webp","gif"}
+IMAGE_EXT = {"png", "jpg", "jpeg", "webp", "gif"}
 
 os.makedirs(THUMB, exist_ok=True)
 os.makedirs(OUT_DIR, exist_ok=True)
 
 
+# ----------------------------
+# サムネ生成
+# ----------------------------
 def make_thumb(src, dst, size=400):
     img = Image.open(src)
     img.thumbnail((size, size))
     img.save(dst)
 
 
+# ----------------------------
+# 画像スキャン
+# ----------------------------
 def scan():
     data = []
+
+    if not os.path.exists(BASE):
+        print("files/images not found")
+        return data
 
     for f in os.listdir(BASE):
         ext = f.split(".")[-1].lower()
@@ -42,6 +52,9 @@ def scan():
     return data
 
 
+# ----------------------------
+# 詳細ビューア（操作付き）
+# ----------------------------
 def make_detail_page(item):
     html = f"""
 <!DOCTYPE html>
@@ -49,23 +62,142 @@ def make_detail_page(item):
 <head>
 <meta charset="UTF-8">
 <title>{item['name']}</title>
+
 <style>
 body {{
   margin:0;
   background:#111;
+  overflow:hidden;
+}}
+
+#wrap {{
+  width:100vw;
+  height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
+  cursor:grab;
 }}
-img {{
-  max-width:90%;
-  max-height:90%;
+
+#img {{
+  max-width:none;
+  transform-origin:center;
+}}
+
+.toolbar {{
+  position:fixed;
+  top:10px;
+  left:10px;
+  background:#222;
+  padding:10px;
+  display:flex;
+  gap:6px;
+  border-radius:8px;
+}}
+
+button {{
+  padding:6px 10px;
+  background:#333;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}}
+button:hover {{
+  background:#555;
 }}
 </style>
 </head>
+
 <body>
-<img src="../{item['src']}">
+
+<div class="toolbar">
+  <button onclick="zoom(1.1)">＋</button>
+  <button onclick="zoom(0.9)">－</button>
+  <button onclick="rotate(90)">↻</button>
+  <button onclick="flipX()">↔</button>
+  <button onclick="flipY()">↕</button>
+  <button onclick="reset()">Reset</button>
+</div>
+
+<div id="wrap">
+  <img id="img" src="../{item['src']}">
+</div>
+
+<script>
+let scale = 1;
+let rot = 0;
+let fx = 1;
+let fy = 1;
+
+let pos = {{x:0,y:0}};
+let dragging = false;
+let last = {{x:0,y:0}};
+
+const img = document.getElementById("img");
+const wrap = document.getElementById("wrap");
+
+function update() {{
+  img.style.transform =
+    `translate(${{pos.x}}px, ${{pos.y}}px)
+     scale(${{scale}})
+     rotate(${{rot}}deg)
+     scaleX(${{fx}})
+     scaleY(${{fy}})`;
+}}
+
+function zoom(v) {{
+  scale *= v;
+  update();
+}}
+
+function rotate(v) {{
+  rot += v;
+  update();
+}}
+
+function flipX() {{
+  fx *= -1;
+  update();
+}}
+
+function flipY() {{
+  fy *= -1;
+  update();
+}}
+
+function reset() {{
+  scale = 1;
+  rot = 0;
+  fx = 1;
+  fy = 1;
+  pos = {{x:0,y:0}};
+  update();
+}}
+
+wrap.addEventListener("mousedown", e => {{
+  dragging = true;
+  wrap.style.cursor = "grabbing";
+  last = {{x:e.clientX, y:e.clientY}};
+}});
+
+window.addEventListener("mouseup", () => {{
+  dragging = false;
+  wrap.style.cursor = "grab";
+}});
+
+window.addEventListener("mousemove", e => {{
+  if (!dragging) return;
+
+  pos.x += e.clientX - last.x;
+  pos.y += e.clientY - last.y;
+
+  last = {{x:e.clientX, y:e.clientY}};
+  update();
+}});
+
+update();
+</script>
+
 </body>
 </html>
 """
@@ -75,6 +207,9 @@ img {{
         f.write(html)
 
 
+# ----------------------------
+# index.html生成
+# ----------------------------
 def build_index(data):
     js = json.dumps(data, ensure_ascii=False)
 
@@ -176,6 +311,9 @@ render(data);
         f.write(html)
 
 
+# ----------------------------
+# メイン処理
+# ----------------------------
 def main():
     data = scan()
 
@@ -184,7 +322,7 @@ def main():
 
     build_index(data)
 
-    print("build complete")
+    print(f"build complete ({len(data)} images)")
 
 
 if __name__ == "__main__":
