@@ -172,7 +172,6 @@ body.hide-ui .toggle {{
 
     if is_image:
         html += f"""
-<div class="toggle" onclick="toggleUI()">UI</div>
 <div class="toolbar">
   <div class="info">{item['name']}</div>
   <button onclick="zoom(1.1)">＋</button>
@@ -184,6 +183,8 @@ body.hide-ui .toggle {{
 <div id="wrap">
   <img id="img" src="../{item['src']}">
 </div>
+
+<div class="toggle" onclick="toggleUI()">UI</div>
 
 <script>
 let scale=1, rot=0;
@@ -212,6 +213,7 @@ update();
 
 <pre id="text"></pre>
 <div class="copyBtn" onclick="copyText()">COPY</div>
+<div class="toggle" onclick="toggleUI()">UI</div>
 
 <script>
 fetch("../{item['src']}")
