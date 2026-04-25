@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Viewer</title>
+<title>2DCG CMS</title>
 
 <style>
 body {
@@ -40,29 +40,19 @@ input {
 .card img {
   width:100%;
 }
-
-.sidebar {
-  position:fixed;
-  right:0;
-  top:0;
-  width:200px;
-  height:100%;
-  background:#111;
-  padding:10px;
-}
 </style>
 </head>
 
 <body>
 
 <div class="topbar">
-  <input id="search" placeholder="tag search...">
+  <input id="search" placeholder="search filename...">
 </div>
 
 <div class="grid" id="grid"></div>
 
 <script>
-const data = [{"name": "screenshot_2026-01-24_032414.png", "src": "files/images/screenshot_2026-01-24_032414.png", "thumb": "files/thumbs/screenshot_2026-01-24_032414.png", "tags": [], "page": "pages/screenshot_2026-01-24_032414.png.html"}];
+const data = [{"name": "screenshot_2026-01-24_032414.png", "src": "files/images/screenshot_2026-01-24_032414.png", "thumb": "files/thumbs/screenshot_2026-01-24_032414.png"}];
 
 const grid = document.getElementById("grid");
 const search = document.getElementById("search");

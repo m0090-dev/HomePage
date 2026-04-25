@@ -36,8 +36,7 @@ def scan():
         data.append({
             "name": f,
             "src": src,
-            "thumb": thumb,
-            "tags": []
+            "thumb": thumb
         })
 
     return data
@@ -54,7 +53,6 @@ def make_detail_page(item):
 body {{
   margin:0;
   background:#111;
-  color:#eee;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -75,8 +73,6 @@ img {{
     path = f"{OUT_DIR}/{item['name']}.html"
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
-
-    item["page"] = path
 
 
 def build_index(data):
@@ -124,23 +120,13 @@ input {{
 .card img {{
   width:100%;
 }}
-
-.sidebar {{
-  position:fixed;
-  right:0;
-  top:0;
-  width:200px;
-  height:100%;
-  background:#111;
-  padding:10px;
-}}
 </style>
 </head>
 
 <body>
 
 <div class="topbar">
-  <input id="search" placeholder="tag search...">
+  <input id="search" placeholder="search filename...">
 </div>
 
 <div class="grid" id="grid"></div>
