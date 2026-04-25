@@ -52,6 +52,9 @@ def scan():
     return data
 
 
+# ----------------------------
+# 詳細ビューア生成
+# ----------------------------
 def make_detail_page(item):
     html = f"""
 <!DOCTYPE html>
@@ -69,7 +72,6 @@ body {{
   color:#fff;
 }}
 
-/* ===== 画像領域 ===== */
 #wrap {{
   width:100vw;
   height:100vh;
@@ -84,7 +86,6 @@ body {{
   transform-origin:center;
 }}
 
-/* ===== UI ===== */
 .toolbar {{
   position:fixed;
   top:10px;
@@ -137,27 +138,26 @@ button:hover {{
   margin-bottom:6px;
 }}
 
-/* ===== モバイル最適化 ===== */
-@media (max-width: 768px) {{
+@media (max-width:768px) {{
 
   .toolbar {{
-    width: 85vw;
-    left: 7.5vw;
-    padding: 14px;
+    width:85vw;
+    left:7.5vw;
+    padding:14px;
   }}
 
   button {{
-    padding: 12px;
-    font-size: 14px;
+    padding:12px;
+    font-size:14px;
   }}
 
   .info {{
-    font-size: 14px;
+    font-size:14px;
   }}
 
   .toggle {{
-    padding: 12px;
-    font-size: 14px;
+    padding:12px;
+    font-size:14px;
   }}
 }}
 </style>
@@ -201,18 +201,12 @@ const wrap = document.getElementById("wrap");
 const ui = document.getElementById("ui");
 const info = document.getElementById("info");
 
-/* =========================
-   画像情報
-========================= */
 img.onload = () => {{
   info.innerHTML =
     "file: {item['name']}<br>" +
     "size: " + img.naturalWidth + " x " + img.naturalHeight;
 }};
 
-/* =========================
-   更新
-========================= */
 function update() {{
   img.style.transform =
     `translate(${{pos.x}}px, ${{pos.y}}px)
@@ -222,9 +216,6 @@ function update() {{
      scaleY(${{fy}})`;
 }}
 
-/* =========================
-   操作
-========================= */
 function zoom(v) {{
   scale *= v;
   update();
@@ -266,13 +257,10 @@ function toggleFull() {{
   }}
 }}
 
-/* =========================
-   マウスドラッグ
-========================= */
 wrap.addEventListener("mousedown", e => {{
   dragging = true;
   wrap.style.cursor = "grabbing";
-  last = {{x:e.clientX, y:e.clientY}};
+  last = {{x:e.clientX,y:e.clientY}};
 }});
 
 window.addEventListener("mouseup", () => {{
@@ -282,26 +270,17 @@ window.addEventListener("mouseup", () => {{
 
 window.addEventListener("mousemove", e => {{
   if (!dragging) return;
-
   pos.x += e.clientX - last.x;
   pos.y += e.clientY - last.y;
-
-  last = {{x:e.clientX, y:e.clientY}};
+  last = {{x:e.clientX,y:e.clientY}};
   update();
 }});
 
-/* =========================
-   ホイールズーム
-========================= */
 window.addEventListener("wheel", e => {{
-  const z = e.deltaY < 0 ? 1.1 : 0.9;
-  scale *= z;
+  scale *= (e.deltaY < 0 ? 1.1 : 0.9);
   update();
 }});
 
-/* =========================
-   キーボード
-========================= */
 const files = {json.dumps(sorted(os.listdir(BASE)))};
 
 let current = files.indexOf("{item['name']}");
@@ -316,13 +295,10 @@ function navigate(dir) {{
   current += dir;
   if (current < 0) current = files.length - 1;
   if (current >= files.length) current = 0;
-
   window.location = "../pages/" + files[current] + ".html";
 }}
 
-/* =========================
-   タッチ（モバイル改善版）
-========================= */
+/* touch */
 let touches = [];
 
 window.addEventListener("touchstart", e => {{
@@ -331,17 +307,13 @@ window.addEventListener("touchstart", e => {{
 
 window.addEventListener("touchmove", e => {{
   if (e.touches.length == 1) {{
-
     let t = e.touches[0];
-
     pos.x += (t.clientX - (touches[0]?.clientX || 0)) * 1.2;
     pos.y += (t.clientY - (touches[0]?.clientY || 0)) * 1.2;
-
     update();
   }}
 
   if (e.touches.length == 2) {{
-
     let dx = e.touches[0].clientX - e.touches[1].clientX;
     let dy = e.touches[0].clientY - e.touches[1].clientY;
     let dist = Math.sqrt(dx*dx + dy*dy);
@@ -357,12 +329,8 @@ window.addEventListener("touchmove", e => {{
   touches = e.touches;
 }});
 
-/* =========================
-   ダブルタップズーム
-========================= */
 let lastTap = 0;
-
-window.addEventListener("touchend", e => {{
+window.addEventListener("touchend", () => {{
   const now = Date.now();
   if (now - lastTap < 300) {{
     scale *= 1.2;
@@ -384,7 +352,7 @@ update();
 
 
 # ----------------------------
-# index.html生成
+# index生成（モバイル対応済み）
 # ----------------------------
 def build_index(data):
     js = json.dumps(data, ensure_ascii=False)
@@ -431,6 +399,19 @@ input {{
 .card img {{
   width:100%;
 }}
+
+@media (max-width:768px) {{
+  input {{
+    width:95%;
+    font-size:16px;
+    padding:12px;
+  }}
+
+  .grid {{
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:12px;
+  }}
+}}
 </style>
 </head>
 
@@ -470,10 +451,7 @@ function render(list) {{
 
 search.addEventListener("input", () => {{
   const q = search.value.toLowerCase();
-
-  render(data.filter(d =>
-    d.name.toLowerCase().includes(q)
-  ));
+  render(data.filter(d => d.name.toLowerCase().includes(q)));
 }});
 
 render(data);
@@ -488,7 +466,7 @@ render(data);
 
 
 # ----------------------------
-# メイン処理
+# main
 # ----------------------------
 def main():
     data = scan()

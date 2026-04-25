@@ -40,6 +40,19 @@ input {
 .card img {
   width:100%;
 }
+
+@media (max-width:768px) {
+  input {
+    width:95%;
+    font-size:16px;
+    padding:12px;
+  }
+
+  .grid {
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:12px;
+  }
+}
 </style>
 </head>
 
@@ -79,10 +92,7 @@ function render(list) {
 
 search.addEventListener("input", () => {
   const q = search.value.toLowerCase();
-
-  render(data.filter(d =>
-    d.name.toLowerCase().includes(q)
-  ));
+  render(data.filter(d => d.name.toLowerCase().includes(q)));
 });
 
 render(data);
