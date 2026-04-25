@@ -52,9 +52,6 @@ def scan():
     return data
 
 
-# ----------------------------
-# 詳細ビューア（操作付き）
-# ----------------------------
 def make_detail_page(item):
     html = f"""
 <!DOCTYPE html>
@@ -68,8 +65,10 @@ body {{
   margin:0;
   background:#111;
   overflow:hidden;
+  font-family:sans-serif;
 }}
 
+/* 背景キャンバス */
 #wrap {{
   width:100vw;
   height:100vh;
@@ -84,15 +83,22 @@ body {{
   transform-origin:center;
 }}
 
+/* UIパネル */
 .toolbar {{
   position:fixed;
   top:10px;
   left:10px;
   background:#222;
   padding:10px;
-  display:flex;
-  gap:6px;
   border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:180px;
+}}
+
+.toolbar.hidden {{
+  display:none;
 }}
 
 button {{
@@ -105,18 +111,41 @@ button {{
 button:hover {{
   background:#555;
 }}
+
+/* 情報表示 */
+.info {{
+  font-size:12px;
+  opacity:0.9;
+  margin-bottom:6px;
+  white-space:pre;
+}}
+
+.toggle {{
+  position:fixed;
+  top:10px;
+  right:10px;
+  background:#333;
+  padding:8px;
+  cursor:pointer;
+  color:#fff;
+  border-radius:6px;
+}}
 </style>
 </head>
 
 <body>
 
-<div class="toolbar">
-  <button onclick="zoom(1.1)">＋</button>
-  <button onclick="zoom(0.9)">－</button>
-  <button onclick="rotate(90)">↻</button>
-  <button onclick="flipX()">↔</button>
-  <button onclick="flipY()">↕</button>
-  <button onclick="reset()">Reset</button>
+<div class="toggle" onclick="toggleUI()">UI</div>
+
+<div class="toolbar" id="ui">
+  <div class="info" id="info">loading...</div>
+
+  <button onclick="zoom(1.1)">＋ zoom</button>
+  <button onclick="zoom(0.9)">－ zoom</button>
+  <button onclick="rotate(90)">rotate</button>
+  <button onclick="flipX()">flip X</button>
+  <button onclick="flipY()">flip Y</button>
+  <button onclick="reset()">reset</button>
 </div>
 
 <div id="wrap">
@@ -135,6 +164,15 @@ let last = {{x:0,y:0}};
 
 const img = document.getElementById("img");
 const wrap = document.getElementById("wrap");
+const ui = document.getElementById("ui");
+const info = document.getElementById("info");
+
+/* 画像情報取得 */
+img.onload = () => {{
+  info.textContent =
+    "file: {item['name']}\\n" +
+    "size: " + img.naturalWidth + " x " + img.naturalHeight;
+}};
 
 function update() {{
   img.style.transform =
@@ -172,6 +210,10 @@ function reset() {{
   fy = 1;
   pos = {{x:0,y:0}};
   update();
+}}
+
+function toggleUI() {{
+  ui.classList.toggle("hidden");
 }}
 
 wrap.addEventListener("mousedown", e => {{
