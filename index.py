@@ -1,130 +1,204 @@
 import os
 import json
+from PIL import Image
 
-FILES_DIR = "files"
-OUTPUT = "index.html"
+BASE = "files/images"
+THUMB = "files/thumbs"
+OUT_INDEX = "index.html"
+OUT_DIR = "pages"
 
-def scan_files():
-    files = []
+IMAGE_EXT = {"png","jpg","jpeg","webp","gif"}
 
-    for name in os.listdir(FILES_DIR):
-        path = os.path.join(FILES_DIR, name)
-
-        if os.path.isfile(path):
-            files.append({
-                "name": name,
-                "path": f"{FILES_DIR}/{name}"
-            })
-
-    return files
+os.makedirs(THUMB, exist_ok=True)
+os.makedirs(OUT_DIR, exist_ok=True)
 
 
-def generate_html(files_json):
-    files_str = json.dumps(files_json, ensure_ascii=False)
+def make_thumb(src, dst, size=400):
+    img = Image.open(src)
+    img.thumbnail((size, size))
+    img.save(dst)
 
-    html = f"""<!DOCTYPE html>
-<html lang="ja">
+
+def scan():
+    data = []
+
+    for f in os.listdir(BASE):
+        ext = f.split(".")[-1].lower()
+        if ext not in IMAGE_EXT:
+            continue
+
+        src = f"{BASE}/{f}"
+        thumb = f"{THUMB}/{f}"
+
+        if not os.path.exists(thumb):
+            make_thumb(src, thumb)
+
+        data.append({
+            "name": f,
+            "src": src,
+            "thumb": thumb,
+            "tags": []
+        })
+
+    return data
+
+
+def make_detail_page(item):
+    html = f"""
+<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>File Viewer</title>
+<title>{item['name']}</title>
+<style>
+body {{
+  margin:0;
+  background:#111;
+  color:#eee;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}}
+img {{
+  max-width:90%;
+  max-height:90%;
+}}
+</style>
+</head>
+<body>
+<img src="../{item['src']}">
+</body>
+</html>
+"""
+
+    path = f"{OUT_DIR}/{item['name']}.html"
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    item["page"] = path
+
+
+def build_index(data):
+    js = json.dumps(data, ensure_ascii=False)
+
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>2DCG CMS</title>
 
 <style>
 body {{
-  margin: 0;
-  font-family: Arial;
-  background: #ddd;
+  margin:0;
+  font-family:sans-serif;
+  background:#1a1a1a;
+  color:#eee;
 }}
 
-.container {{
-  display: flex;
-  height: 100vh;
+.topbar {{
+  padding:10px;
+  background:#222;
+  position:sticky;
+  top:0;
 }}
 
-.file-list {{
-  width: 250px;
-  overflow-y: auto;
-  background: rgba(255,255,255,0.3);
-  padding: 10px;
+input {{
+  width:300px;
+  padding:8px;
 }}
 
-.file-item {{
-  padding: 10px;
-  cursor: pointer;
-  border-bottom: 1px solid #ccc;
+.grid {{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;
+  padding:10px;
 }}
 
-.viewer {{
-  flex: 1;
-  padding: 20px;
-  overflow: auto;
+.card {{
+  background:#222;
+  cursor:pointer;
 }}
 
-img {{
-  max-width: 100%;
+.card img {{
+  width:100%;
+}}
+
+.sidebar {{
+  position:fixed;
+  right:0;
+  top:0;
+  width:200px;
+  height:100%;
+  background:#111;
+  padding:10px;
 }}
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <div id="list" class="file-list"></div>
-  <div id="viewer" class="viewer">Select file</div>
+<div class="topbar">
+  <input id="search" placeholder="tag search...">
 </div>
 
+<div class="grid" id="grid"></div>
+
 <script>
-const files = {files_str};
+const data = {js};
 
-const list = document.getElementById("list");
-const viewer = document.getElementById("viewer");
+const grid = document.getElementById("grid");
+const search = document.getElementById("search");
 
-files.forEach(f => {{
-  const div = document.createElement("div");
-  div.className = "file-item";
-  div.textContent = f.name;
+function render(list) {{
+  grid.innerHTML = "";
 
-  div.onclick = async () => {{
-    const ext = f.name.split('.').pop().toLowerCase();
+  list.forEach(item => {{
+    const div = document.createElement("div");
+    div.className = "card";
 
-    if (["png","jpg","jpeg","gif","webp"].includes(ext)) {{
-      viewer.innerHTML = `<img src="${{f.path}}">`;
-    }} else {{
-      const res = await fetch(f.path);
-      const text = await res.text();
-      viewer.innerHTML = `<pre>${{escapeHtml(text)}}</pre>`;
-    }}
-  }};
+    div.innerHTML = `
+      <img src="${{item.thumb}}">
+      <div>${{item.name}}</div>
+    `;
 
-  list.appendChild(div);
+    div.onclick = () => {{
+      window.location = "pages/" + item.name + ".html";
+    }};
+
+    grid.appendChild(div);
+  }});
+}}
+
+search.addEventListener("input", () => {{
+  const q = search.value.toLowerCase();
+
+  render(data.filter(d =>
+    d.name.toLowerCase().includes(q)
+  ));
 }});
 
-function escapeHtml(str) {{
-  return str.replace(/[&<>"']/g, m => ({{
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  }}[m]));
-}}
+render(data);
 </script>
 
 </body>
 </html>
 """
 
-    return html
+    with open(OUT_INDEX, "w", encoding="utf-8") as f:
+        f.write(html)
 
 
 def main():
-    files = scan_files()
-    html = generate_html(files)
+    data = scan()
 
-    with open(OUTPUT, "w", encoding="utf-8") as f:
-        f.write(html)
+    for item in data:
+        make_detail_page(item)
 
-    print(f"Generated {OUTPUT} with {len(files)} files")
+    build_index(data)
+
+    print("build complete")
 
 
 if __name__ == "__main__":

@@ -1,89 +1,101 @@
+
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>File Viewer</title>
+<title>2DCG CMS</title>
 
 <style>
 body {
-  margin: 0;
-  font-family: Arial;
-  background: #ddd;
+  margin:0;
+  font-family:sans-serif;
+  background:#1a1a1a;
+  color:#eee;
 }
 
-.container {
-  display: flex;
-  height: 100vh;
+.topbar {
+  padding:10px;
+  background:#222;
+  position:sticky;
+  top:0;
 }
 
-.file-list {
-  width: 250px;
-  overflow-y: auto;
-  background: rgba(255,255,255,0.3);
-  padding: 10px;
+input {
+  width:300px;
+  padding:8px;
 }
 
-.file-item {
-  padding: 10px;
-  cursor: pointer;
-  border-bottom: 1px solid #ccc;
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;
+  padding:10px;
 }
 
-.viewer {
-  flex: 1;
-  padding: 20px;
-  overflow: auto;
+.card {
+  background:#222;
+  cursor:pointer;
 }
 
-img {
-  max-width: 100%;
+.card img {
+  width:100%;
+}
+
+.sidebar {
+  position:fixed;
+  right:0;
+  top:0;
+  width:200px;
+  height:100%;
+  background:#111;
+  padding:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <div id="list" class="file-list"></div>
-  <div id="viewer" class="viewer">Select file</div>
+<div class="topbar">
+  <input id="search" placeholder="tag search...">
 </div>
 
+<div class="grid" id="grid"></div>
+
 <script>
-const files = [{"name": "screenshot_2026-01-24_032414.png", "path": "files/screenshot_2026-01-24_032414.png"}, {"name": "test.txt", "path": "files/test.txt"}];
+const data = [{"name": "screenshot_2026-01-24_032414.png", "src": "files/images/screenshot_2026-01-24_032414.png", "thumb": "files/thumbs/screenshot_2026-01-24_032414.png", "tags": [], "page": "pages/screenshot_2026-01-24_032414.png.html"}];
 
-const list = document.getElementById("list");
-const viewer = document.getElementById("viewer");
+const grid = document.getElementById("grid");
+const search = document.getElementById("search");
 
-files.forEach(f => {
-  const div = document.createElement("div");
-  div.className = "file-item";
-  div.textContent = f.name;
+function render(list) {
+  grid.innerHTML = "";
 
-  div.onclick = async () => {
-    const ext = f.name.split('.').pop().toLowerCase();
+  list.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "card";
 
-    if (["png","jpg","jpeg","gif","webp"].includes(ext)) {
-      viewer.innerHTML = `<img src="${f.path}">`;
-    } else {
-      const res = await fetch(f.path);
-      const text = await res.text();
-      viewer.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
-    }
-  };
+    div.innerHTML = `
+      <img src="${item.thumb}">
+      <div>${item.name}</div>
+    `;
 
-  list.appendChild(div);
+    div.onclick = () => {
+      window.location = "pages/" + item.name + ".html";
+    };
+
+    grid.appendChild(div);
+  });
+}
+
+search.addEventListener("input", () => {
+  const q = search.value.toLowerCase();
+
+  render(data.filter(d =>
+    d.name.toLowerCase().includes(q)
+  ));
 });
 
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, m => ({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  }[m]));
-}
+render(data);
 </script>
 
 </body>
