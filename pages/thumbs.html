@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>screenshot_2026-01-24_032414.png</title>
+<title>thumbs</title>
 
 <style>
 body {
@@ -75,30 +75,22 @@ pre {
 <body>
 
 <div class="toolbar">
-  <div class="info">screenshot_2026-01-24_032414.png</div>
-  <button onclick="zoom(1.1)">＋</button>
-  <button onclick="zoom(0.9)">－</button>
-  <button onclick="rotate(90)">rotate</button>
-  <button onclick="reset()">reset</button>
+  <div class="info">thumbs</div>
 </div>
 
-<div id="wrap">
-  <img id="img" src="../files/screenshot_2026-01-24_032414.png">
-</div>
+<pre id="text"></pre>
+<div class="copyBtn" onclick="copyText()">COPY</div>
 
 <script>
-let scale=1, rot=0;
-const img=document.getElementById("img");
+fetch("../files/thumbs")
+.then(r=>r.text())
+.then(t=>document.getElementById("text").textContent=t);
 
-function update(){
-  img.style.transform=`scale(${scale}) rotate(${rot}deg)`;
+function copyText(){
+  navigator.clipboard.writeText(
+    document.getElementById("text").textContent
+  );
 }
-
-function zoom(v){scale*=v;update();}
-function rotate(v){rot+=v;update();}
-function reset(){scale=1;rot=0;update();}
-
-update();
 </script>
 
 </body>

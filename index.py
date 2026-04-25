@@ -2,7 +2,7 @@ import os
 import json
 from PIL import Image
 
-BASE = "files/images"
+BASE = "files"
 THUMB = "files/thumbs"
 OUT_INDEX = "index.html"
 OUT_DIR = "pages"
@@ -47,6 +47,8 @@ def scan():
         return data
 
     for f in os.listdir(BASE):
+        if f == "thumbs":
+          continue
         src = f"{BASE}/{f}"
         kind = get_type(f)
 
