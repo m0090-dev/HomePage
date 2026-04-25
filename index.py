@@ -88,6 +88,7 @@ def make_detail_page(item):
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<meta name="google" content="notranslate">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>{item['name']}</title>
