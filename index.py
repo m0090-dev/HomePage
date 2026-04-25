@@ -66,9 +66,10 @@ body {{
   background:#111;
   overflow:hidden;
   font-family:sans-serif;
+  color:#fff;
 }}
 
-/* 背景キャンバス */
+/* 画像表示エリア */
 #wrap {{
   width:100vw;
   height:100vh;
@@ -83,31 +84,40 @@ body {{
   transform-origin:center;
 }}
 
-/* UIパネル */
+/* UIパネル（固定＆画面サイズ対応） */
 .toolbar {{
   position:fixed;
   top:10px;
   left:10px;
-  background:#222;
+  z-index:9999;
+
+  background:rgba(30,30,30,0.95);
   padding:10px;
   border-radius:8px;
+
   display:flex;
   flex-direction:column;
   gap:6px;
-  min-width:180px;
+
+  width:200px;
+  max-width:80vw;
+  box-sizing:border-box;
 }}
 
 .toolbar.hidden {{
   display:none;
 }}
 
+/* ボタン */
 button {{
   padding:6px 10px;
   background:#333;
   color:#fff;
   border:none;
   cursor:pointer;
+  font-size:13px;
 }}
+
 button:hover {{
   background:#555;
 }}
@@ -115,20 +125,29 @@ button:hover {{
 /* 情報表示 */
 .info {{
   font-size:12px;
+  color:#fff;
   opacity:0.9;
   margin-bottom:6px;
-  white-space:pre;
+  white-space:pre-wrap;
 }}
 
+/* UIトグルボタン */
 .toggle {{
   position:fixed;
   top:10px;
   right:10px;
+  z-index:10000;
+
   background:#333;
-  padding:8px;
-  cursor:pointer;
   color:#fff;
+  padding:8px 10px;
   border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+}}
+
+.toggle:hover {{
+  background:#555;
 }}
 </style>
 </head>
@@ -167,7 +186,7 @@ const wrap = document.getElementById("wrap");
 const ui = document.getElementById("ui");
 const info = document.getElementById("info");
 
-/* 画像情報取得 */
+/* 画像情報 */
 img.onload = () => {{
   info.textContent =
     "file: {item['name']}\\n" +
@@ -216,6 +235,7 @@ function toggleUI() {{
   ui.classList.toggle("hidden");
 }}
 
+/* ドラッグ */
 wrap.addEventListener("mousedown", e => {{
   dragging = true;
   wrap.style.cursor = "grabbing";
