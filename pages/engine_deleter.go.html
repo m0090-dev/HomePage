@@ -1,107 +1,177 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta name="google" content="notranslate">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="google" content="notranslate">
 <title>engine_deleter.go</title>
-
 <style>
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-  margin:0;
-  background:#111;
-  font-family:sans-serif;
-  color:#fff;
+  margin: 0;
+  background: #111;
+  color: #eee;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  overflow: auto;
 }
 
+/* ── ツールバー ── */
 .toolbar {
-  position:fixed;
-  top:10px;
-  left:10px;
-  z-index:9999;
-  background:rgba(30,30,30,0.95);
-  padding:10px;
-  border-radius:8px;
-  width:240px;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 1000;
+  background: rgba(20,20,20,0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+  max-width: 300px;
+  transition: opacity 0.2s, transform 0.2s;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
 }
 
-button {
-  background:#333;
-  color:#fff;
-  border:none;
-  padding:8px;
-  margin:2px 0;
-  width:100%;
-  cursor:pointer;
+.meta {
+  font-size: 11px;
+  color: #aaa;
+  word-break: break-all;
+  line-height: 1.5;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 8px;
 }
 
-.info {
-  font-size:12px;
-  margin-bottom:8px;
-  word-break:break-all;
+.btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
-#wrap {
-  width:100vw;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  overflow:hidden;
+.btns button,
+.btns .btn-a {
+  background: rgba(255,255,255,0.07);
+  color: #ddd;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 6px 11px;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
 }
 
-#img {
-  max-width:none;
-  transform-origin:center;
+.btns button:hover,
+.btns .btn-a:hover {
+  background: rgba(255,255,255,0.16);
+  color: #fff;
 }
 
-pre {
-  white-space:pre-wrap;
-  word-break:break-word;
-  padding:20px;
+/* ── UI非表示トグル ── */
+.toggle-ui {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1001;
+  width: 34px;
+  height: 34px;
+  background: rgba(20,20,20,0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #aaa;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, opacity 0.2s;
+}
+.toggle-ui:hover { background: rgba(60,60,60,0.9); color: #fff; }
+
+/* UI非表示状態 */
+body.ui-hidden .toolbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+}
+body.ui-hidden .toggle-ui {
+  opacity: 0.25;
+  background: transparent;
+  border-color: transparent;
+}
+body.ui-hidden .toggle-ui:hover {
+  opacity: 0.8;
 }
 
-.copyBtn {
-  position:fixed;
-  bottom:10px;
-  right:10px;
-  background:#444;
-  padding:10px;
-  cursor:pointer;
-}
-body.hide-ui .toolbar {
-  display: none;
-}
 
-body.hide-ui .toggle {
-  opacity: 0.3;
-}
+  #text-wrap {
+    padding: 70px 24px 40px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: #d4d4d4;
+  }
+
 </style>
 </head>
-
 <body>
 
-<div class="toolbar">
-  <div class="info">engine_deleter.go</div>
+
+<div class="toolbar" id="toolbar">
+  <div class="meta">engine_deleter.go &nbsp;·&nbsp; 4.6 KB</div>
+  <div class="btns">
+    <button id="copyBtn" onclick="copyText()">Copy</button>
+    <a class="btn-a" href="../files/engine_deleter.go" download="engine_deleter.go" title="ダウンロード">↓</a>
+    <a class="btn-a" href="../index.html" title="一覧へ">☰</a>
+  </div>
+</div>
+<button class="toggle-ui" id="toggleBtn" onclick="toggleUI()" title="UI表示切替">✕</button>
+
+
+<div id="text-wrap">
+  <pre id="text"></pre>
 </div>
 
-<pre id="text"></pre>
-<div class="copyBtn" onclick="copyText()">COPY</div>
-<div class="toggle" onclick="toggleUI()">UI</div>
 
 <script>
+
 fetch("../files/engine_deleter.go")
-.then(r=>r.text())
-.then(t=>document.getElementById("text").textContent=t);
+  .then(r => r.text())
+  .then(t => {
+    document.getElementById("text").textContent = t;
+  });
 
-function copyText(){
-  navigator.clipboard.writeText(
-    document.getElementById("text").textContent
-  );
+function copyText() {
+  const t = document.getElementById("text").textContent;
+  navigator.clipboard.writeText(t).then(() => {
+    const btn = document.getElementById("copyBtn");
+    btn.textContent = "✓ Copied";
+    setTimeout(() => btn.textContent = "Copy", 1500);
+  });
 }
-</script>
 
+
+function toggleUI() {
+  const hidden = document.body.classList.toggle("ui-hidden");
+  document.getElementById("toggleBtn").textContent = hidden ? "☰" : "✕";
+}
+
+</script>
 </body>
 </html>
