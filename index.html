@@ -11,24 +11,12 @@ body {
   margin:0;
   font-family:sans-serif;
   background:#1a1a1a;
-  color:#eee;
-}
-
-.topbar {
-  padding:10px;
-  background:#222;
-  position:sticky;
-  top:0;
-}
-
-input {
-  width:300px;
-  padding:8px;
+  color:#fff;
 }
 
 .grid {
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
   gap:10px;
   padding:10px;
 }
@@ -37,61 +25,44 @@ input {
   background:#222;
   cursor:pointer;
 }
-
 .card img {
   width:100%;
-}
-
-@media (max-width:768px) {
-  input {
-    width:95%;
-    font-size:16px;
-  }
-
-  .grid {
-    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  }
 }
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <input id="search" placeholder="search filename...">
-</div>
+<input id="search" placeholder="search">
 
 <div class="grid" id="grid"></div>
 
 <script>
-const data = [{"name": "screenshot_2026-01-24_032414.png", "src": "files/images/screenshot_2026-01-24_032414.png", "thumb": "files/thumbs/screenshot_2026-01-24_032414.png"}];
+const data = [{"name": "screenshot_2026-01-24_032414.png", "type": "image", "src": "files/images/screenshot_2026-01-24_032414.png", "thumb": "files/thumbs/screenshot_2026-01-24_032414.png"}];
 
 const grid = document.getElementById("grid");
 const search = document.getElementById("search");
 
-function render(list) {
-  grid.innerHTML = "";
+function render(list){
+  grid.innerHTML="";
 
-  list.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "card";
+  list.forEach(i=>{
+    const div=document.createElement("div");
+    div.className="card";
 
-    div.innerHTML = `
-      <img src="${item.thumb}">
-      <div>${item.name}</div>
-    `;
+    div.innerHTML =
+      i.type==="image"
+      ? `<img src="${i.thumb}"><div>${i.name}</div>`
+      : `<div style="padding:10px">${i.name}</div>`;
 
-    div.onclick = () => {
-      window.location = "pages/" + item.name + ".html";
-    };
-
+    div.onclick=()=>location="pages/"+i.name+".html";
     grid.appendChild(div);
   });
 }
 
-search.addEventListener("input", () => {
-  const q = search.value.toLowerCase();
-  render(data.filter(d => d.name.toLowerCase().includes(q)));
+search.addEventListener("input", ()=>{
+  const q=search.value.toLowerCase();
+  render(data.filter(d=>d.name.toLowerCase().includes(q)));
 });
 
 render(data);

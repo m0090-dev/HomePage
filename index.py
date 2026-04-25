@@ -8,6 +8,7 @@ OUT_INDEX = "index.html"
 OUT_DIR = "pages"
 
 IMAGE_EXT = {"png", "jpg", "jpeg", "webp", "gif"}
+TEXT_EXT = {"txt", "md", "py", "js", "html", "css", "json", "xml", "csv"}
 
 os.makedirs(THUMB, exist_ok=True)
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -23,7 +24,20 @@ def make_thumb(src, dst, size=400):
 
 
 # ----------------------------
-# 画像スキャン
+# 種別判定
+# ----------------------------
+def get_type(file):
+    ext = file.split(".")[-1].lower()
+
+    if ext in IMAGE_EXT:
+        return "image"
+    if ext in TEXT_EXT:
+        return "text"
+    return "text"
+
+
+# ----------------------------
+# スキャン
 # ----------------------------
 def scan():
     data = []
@@ -33,29 +47,41 @@ def scan():
         return data
 
     for f in os.listdir(BASE):
-        ext = f.split(".")[-1].lower()
-        if ext not in IMAGE_EXT:
-            continue
-
         src = f"{BASE}/{f}"
-        thumb = f"{THUMB}/{f}"
+        kind = get_type(f)
 
-        if not os.path.exists(thumb):
-            make_thumb(src, thumb)
+        if kind == "image":
+            thumb = f"{THUMB}/{f}"
 
-        data.append({
-            "name": f,
-            "src": src,
-            "thumb": thumb
-        })
+            if not os.path.exists(thumb):
+                try:
+                    make_thumb(src, thumb)
+                except:
+                    thumb = src
+
+            data.append({
+                "name": f,
+                "type": "image",
+                "src": src,
+                "thumb": thumb
+            })
+        else:
+            data.append({
+                "name": f,
+                "type": "text",
+                "src": src
+            })
 
     return data
 
 
 # ----------------------------
-# 詳細ビューア生成（縦持ちモバイル完全対応）
+# 詳細ページ
 # ----------------------------
 def make_detail_page(item):
+
+    is_image = item["type"] == "image"
+
     html = f"""
 <!DOCTYPE html>
 <html>
@@ -68,31 +94,10 @@ def make_detail_page(item):
 body {{
   margin:0;
   background:#111;
-  overflow:hidden;
   font-family:sans-serif;
   color:#fff;
-  touch-action:none;
 }}
 
-/* ===== 画像 ===== */
-#wrap {{
-  width:100vw;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  cursor:grab;
-  overflow:hidden;
-}}
-
-#img {{
-  max-width:none;
-  max-height:none;
-  transform-origin:center;
-  will-change:transform;
-}}
-
-/* ===== UI ===== */
 .toolbar {{
   position:fixed;
   top:10px;
@@ -101,101 +106,67 @@ body {{
   background:rgba(30,30,30,0.95);
   padding:10px;
   border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  width:220px;
-  box-sizing:border-box;
-}}
-
-.toolbar.hidden {{
-  display:none;
+  width:240px;
 }}
 
 button {{
   background:#333;
   color:#fff;
   border:none;
-  padding:6px;
+  padding:8px;
+  margin:2px 0;
+  width:100%;
   cursor:pointer;
-  font-size:12px;
-}}
-
-button:active {{
-  background:#555;
-}}
-
-.toggle {{
-  position:fixed;
-  top:10px;
-  right:10px;
-  z-index:10000;
-  background:#333;
-  padding:10px;
-  cursor:pointer;
-  color:#fff;
-  border-radius:6px;
-  font-size:12px;
 }}
 
 .info {{
   font-size:12px;
-  line-height:1.4;
-  opacity:0.9;
-  margin-bottom:6px;
+  margin-bottom:8px;
   word-break:break-all;
 }}
 
-/* ===== モバイル縦持ち最適化 ===== */
-@media (max-width:768px) and (orientation: portrait) {{
-
-  .toolbar {{
-    width:90vw;
-    left:5vw;
-    padding:14px;
-  }}
-
-  button {{
-    padding:14px;
-    font-size:14px;
-  }}
-
-  .info {{
-    font-size:14px;
-  }}
-
-  .toggle {{
-    padding:14px;
-    font-size:14px;
-  }}
+#wrap {{
+  width:100vw;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
 }}
 
-/* 横でも一応崩れ防止 */
-@media (max-width:768px) and (orientation: landscape) {{
-  .toolbar {{
-    width:60vw;
-  }}
+#img {{
+  max-width:none;
+  transform-origin:center;
+}}
+
+pre {{
+  white-space:pre-wrap;
+  word-break:break-word;
+  padding:20px;
+}}
+
+.copyBtn {{
+  position:fixed;
+  bottom:10px;
+  right:10px;
+  background:#444;
+  padding:10px;
+  cursor:pointer;
 }}
 </style>
 </head>
 
 <body>
+"""
 
-<div class="toggle" onclick="toggleUI()">UI</div>
-
-<div class="toolbar" id="ui">
-  <div class="info" id="info">
-    file: {item['name']}<br>
-    size: loading...
-  </div>
-
-  <button onclick="zoom(1.1)">＋ zoom</button>
-  <button onclick="zoom(0.9)">－ zoom</button>
+    if is_image:
+        html += f"""
+<div class="toolbar">
+  <div class="info">{item['name']}</div>
+  <button onclick="zoom(1.1)">＋</button>
+  <button onclick="zoom(0.9)">－</button>
   <button onclick="rotate(90)">rotate</button>
-  <button onclick="flipX()">flip X</button>
-  <button onclick="flipY()">flip Y</button>
   <button onclick="reset()">reset</button>
-  <button onclick="toggleFull()">fullscreen</button>
 </div>
 
 <div id="wrap">
@@ -203,170 +174,43 @@ button:active {{
 </div>
 
 <script>
-let scale = 1;
-let rot = 0;
-let fx = 1;
-let fy = 1;
+let scale=1, rot=0;
+const img=document.getElementById("img");
 
-let pos = {{x:0,y:0}};
-let dragging = false;
-let last = {{x:0,y:0}};
-
-const img = document.getElementById("img");
-const wrap = document.getElementById("wrap");
-const ui = document.getElementById("ui");
-const info = document.getElementById("info");
-
-/* 画像情報 */
-img.onload = () => {{
-  info.innerHTML =
-    "file: {item['name']}<br>" +
-    "size: " + img.naturalWidth + " x " + img.naturalHeight;
-}};
-
-/* 更新 */
-function update() {{
-  img.style.transform =
-    `translate(${{pos.x}}px, ${{pos.y}}px)
-     scale(${{scale}})
-     rotate(${{rot}}deg)
-     scaleX(${{fx}})
-     scaleY(${{fy}})`;
+function update(){{
+  img.style.transform=`scale(${{scale}}) rotate(${{rot}}deg)`;
 }}
 
-/* 操作 */
-function zoom(v) {{
-  scale *= v;
-  update();
-}}
-
-function rotate(v) {{
-  rot += v;
-  update();
-}}
-
-function flipX() {{
-  fx *= -1;
-  update();
-}}
-
-function flipY() {{
-  fy *= -1;
-  update();
-}}
-
-function reset() {{
-  scale = 1;
-  rot = 0;
-  fx = 1;
-  fy = 1;
-  pos = {{x:0,y:0}};
-  update();
-}}
-
-function toggleUI() {{
-  ui.classList.toggle("hidden");
-}}
-
-function toggleFull() {{
-  if (!document.fullscreenElement) {{
-    document.documentElement.requestFullscreen();
-  }} else {{
-    document.exitFullscreen();
-  }}
-}}
-
-/* マウス */
-wrap.addEventListener("mousedown", e => {{
-  dragging = true;
-  wrap.style.cursor = "grabbing";
-  last = {{x:e.clientX,y:e.clientY}};
-}});
-
-window.addEventListener("mouseup", () => {{
-  dragging = false;
-  wrap.style.cursor = "grab";
-}});
-
-window.addEventListener("mousemove", e => {{
-  if (!dragging) return;
-  pos.x += e.clientX - last.x;
-  pos.y += e.clientY - last.y;
-  last = {{x:e.clientX,y:e.clientY}};
-  update();
-}});
-
-/* ホイール */
-window.addEventListener("wheel", e => {{
-  scale *= (e.deltaY < 0 ? 1.1 : 0.9);
-  update();
-}}, {{ passive: true }});
-
-/* キーボード */
-const files = {json.dumps(sorted(os.listdir(BASE)))} ;
-let current = files.indexOf("{item['name']}");
-
-window.addEventListener("keydown", e => {{
-  if (e.key === "ArrowLeft") navigate(-1);
-  if (e.key === "ArrowRight") navigate(1);
-  if (e.key === "f") toggleFull();
-}});
-
-function navigate(dir) {{
-  current += dir;
-  if (current < 0) current = files.length - 1;
-  if (current >= files.length) current = 0;
-  window.location = "../pages/" + files[current] + ".html";
-}}
-
-/* タッチ（縦持ち最適化） */
-let touches = [];
-
-window.addEventListener("touchstart", e => {{
-  touches = e.touches;
-}}, {{ passive: false }});
-
-window.addEventListener("touchmove", e => {{
-  e.preventDefault();
-
-  if (e.touches.length == 1) {{
-    let t = e.touches[0];
-    pos.x += (t.clientX - (touches[0]?.clientX || 0)) * 1.3;
-    pos.y += (t.clientY - (touches[0]?.clientY || 0)) * 1.3;
-    update();
-  }}
-
-  if (e.touches.length == 2) {{
-    let dx = e.touches[0].clientX - e.touches[1].clientX;
-    let dy = e.touches[0].clientY - e.touches[1].clientY;
-    let dist = Math.sqrt(dx*dx + dy*dy);
-
-    let odx = touches[0].clientX - touches[1].clientX;
-    let ody = touches[0].clientY - touches[1].clientY;
-    let odist = Math.sqrt(odx*odx + ody*ody);
-
-    scale *= dist / odist;
-    update();
-  }}
-
-  touches = e.touches;
-}}, {{ passive: false }});
-
-/* ダブルタップズーム */
-let lastTap = 0;
-
-window.addEventListener("touchend", () => {{
-  const now = Date.now();
-  if (now - lastTap < 300) {{
-    scale *= 1.2;
-    update();
-  }}
-  lastTap = now;
-}});
+function zoom(v){{scale*=v;update();}}
+function rotate(v){{rot+=v;update();}}
+function reset(){{scale=1;rot=0;update();}}
 
 update();
 </script>
+"""
+    else:
+        html += f"""
+<div class="toolbar">
+  <div class="info">{item['name']}</div>
+</div>
 
+<pre id="text"></pre>
+<div class="copyBtn" onclick="copyText()">COPY</div>
+
+<script>
+fetch("../{item['src']}")
+.then(r=>r.text())
+.then(t=>document.getElementById("text").textContent=t);
+
+function copyText(){{
+  navigator.clipboard.writeText(
+    document.getElementById("text").textContent
+  );
+}}
+</script>
+"""
+
+    html += """
 </body>
 </html>
 """
@@ -377,9 +221,10 @@ update();
 
 
 # ----------------------------
-# index生成（モバイル対応済み）
+# index
 # ----------------------------
 def build_index(data):
+
     js = json.dumps(data, ensure_ascii=False)
 
     html = f"""
@@ -395,24 +240,12 @@ body {{
   margin:0;
   font-family:sans-serif;
   background:#1a1a1a;
-  color:#eee;
-}}
-
-.topbar {{
-  padding:10px;
-  background:#222;
-  position:sticky;
-  top:0;
-}}
-
-input {{
-  width:300px;
-  padding:8px;
+  color:#fff;
 }}
 
 .grid {{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
   gap:10px;
   padding:10px;
 }}
@@ -421,29 +254,15 @@ input {{
   background:#222;
   cursor:pointer;
 }}
-
 .card img {{
   width:100%;
-}}
-
-@media (max-width:768px) {{
-  input {{
-    width:95%;
-    font-size:16px;
-  }}
-
-  .grid {{
-    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  }}
 }}
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <input id="search" placeholder="search filename...">
-</div>
+<input id="search" placeholder="search">
 
 <div class="grid" id="grid"></div>
 
@@ -453,29 +272,26 @@ const data = {js};
 const grid = document.getElementById("grid");
 const search = document.getElementById("search");
 
-function render(list) {{
-  grid.innerHTML = "";
+function render(list){{
+  grid.innerHTML="";
 
-  list.forEach(item => {{
-    const div = document.createElement("div");
-    div.className = "card";
+  list.forEach(i=>{{
+    const div=document.createElement("div");
+    div.className="card";
 
-    div.innerHTML = `
-      <img src="${{item.thumb}}">
-      <div>${{item.name}}</div>
-    `;
+    div.innerHTML =
+      i.type==="image"
+      ? `<img src="${{i.thumb}}"><div>${{i.name}}</div>`
+      : `<div style="padding:10px">${{i.name}}</div>`;
 
-    div.onclick = () => {{
-      window.location = "pages/" + item.name + ".html";
-    }};
-
+    div.onclick=()=>location="pages/"+i.name+".html";
     grid.appendChild(div);
   }});
 }}
 
-search.addEventListener("input", () => {{
-  const q = search.value.toLowerCase();
-  render(data.filter(d => d.name.toLowerCase().includes(q)));
+search.addEventListener("input", ()=>{{
+  const q=search.value.toLowerCase();
+  render(data.filter(d=>d.name.toLowerCase().includes(q)));
 }});
 
 render(data);
@@ -494,13 +310,10 @@ render(data);
 # ----------------------------
 def main():
     data = scan()
-
     for item in data:
         make_detail_page(item)
-
     build_index(data)
-
-    print(f"build complete ({len(data)} images)")
+    print("done", len(data))
 
 
 if __name__ == "__main__":
