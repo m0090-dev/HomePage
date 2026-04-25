@@ -53,7 +53,7 @@ def scan():
 
 
 # ----------------------------
-# 詳細ビューア生成
+# 詳細ビューア生成（縦持ちモバイル完全対応）
 # ----------------------------
 def make_detail_page(item):
     html = f"""
@@ -61,6 +61,7 @@ def make_detail_page(item):
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>{item['name']}</title>
 
 <style>
@@ -70,8 +71,10 @@ body {{
   overflow:hidden;
   font-family:sans-serif;
   color:#fff;
+  touch-action:none;
 }}
 
+/* ===== 画像 ===== */
 #wrap {{
   width:100vw;
   height:100vh;
@@ -79,13 +82,17 @@ body {{
   justify-content:center;
   align-items:center;
   cursor:grab;
+  overflow:hidden;
 }}
 
 #img {{
   max-width:none;
+  max-height:none;
   transform-origin:center;
+  will-change:transform;
 }}
 
+/* ===== UI ===== */
 .toolbar {{
   position:fixed;
   top:10px;
@@ -114,7 +121,7 @@ button {{
   font-size:12px;
 }}
 
-button:hover {{
+button:active {{
   background:#555;
 }}
 
@@ -124,7 +131,7 @@ button:hover {{
   right:10px;
   z-index:10000;
   background:#333;
-  padding:8px;
+  padding:10px;
   cursor:pointer;
   color:#fff;
   border-radius:6px;
@@ -136,18 +143,20 @@ button:hover {{
   line-height:1.4;
   opacity:0.9;
   margin-bottom:6px;
+  word-break:break-all;
 }}
 
-@media (max-width:768px) {{
+/* ===== モバイル縦持ち最適化 ===== */
+@media (max-width:768px) and (orientation: portrait) {{
 
   .toolbar {{
-    width:85vw;
-    left:7.5vw;
+    width:90vw;
+    left:5vw;
     padding:14px;
   }}
 
   button {{
-    padding:12px;
+    padding:14px;
     font-size:14px;
   }}
 
@@ -156,8 +165,15 @@ button:hover {{
   }}
 
   .toggle {{
-    padding:12px;
+    padding:14px;
     font-size:14px;
+  }}
+}}
+
+/* 横でも一応崩れ防止 */
+@media (max-width:768px) and (orientation: landscape) {{
+  .toolbar {{
+    width:60vw;
   }}
 }}
 </style>
@@ -201,12 +217,14 @@ const wrap = document.getElementById("wrap");
 const ui = document.getElementById("ui");
 const info = document.getElementById("info");
 
+/* 画像情報 */
 img.onload = () => {{
   info.innerHTML =
     "file: {item['name']}<br>" +
     "size: " + img.naturalWidth + " x " + img.naturalHeight;
 }};
 
+/* 更新 */
 function update() {{
   img.style.transform =
     `translate(${{pos.x}}px, ${{pos.y}}px)
@@ -216,6 +234,7 @@ function update() {{
      scaleY(${{fy}})`;
 }}
 
+/* 操作 */
 function zoom(v) {{
   scale *= v;
   update();
@@ -257,6 +276,7 @@ function toggleFull() {{
   }}
 }}
 
+/* マウス */
 wrap.addEventListener("mousedown", e => {{
   dragging = true;
   wrap.style.cursor = "grabbing";
@@ -276,13 +296,14 @@ window.addEventListener("mousemove", e => {{
   update();
 }});
 
+/* ホイール */
 window.addEventListener("wheel", e => {{
   scale *= (e.deltaY < 0 ? 1.1 : 0.9);
   update();
-}});
+}}, {{ passive: true }});
 
-const files = {json.dumps(sorted(os.listdir(BASE)))};
-
+/* キーボード */
+const files = {json.dumps(sorted(os.listdir(BASE)))} ;
 let current = files.indexOf("{item['name']}");
 
 window.addEventListener("keydown", e => {{
@@ -298,18 +319,20 @@ function navigate(dir) {{
   window.location = "../pages/" + files[current] + ".html";
 }}
 
-/* touch */
+/* タッチ（縦持ち最適化） */
 let touches = [];
 
 window.addEventListener("touchstart", e => {{
   touches = e.touches;
-}});
+}}, {{ passive: false }});
 
 window.addEventListener("touchmove", e => {{
+  e.preventDefault();
+
   if (e.touches.length == 1) {{
     let t = e.touches[0];
-    pos.x += (t.clientX - (touches[0]?.clientX || 0)) * 1.2;
-    pos.y += (t.clientY - (touches[0]?.clientY || 0)) * 1.2;
+    pos.x += (t.clientX - (touches[0]?.clientX || 0)) * 1.3;
+    pos.y += (t.clientY - (touches[0]?.clientY || 0)) * 1.3;
     update();
   }}
 
@@ -327,9 +350,11 @@ window.addEventListener("touchmove", e => {{
   }}
 
   touches = e.touches;
-}});
+}}, {{ passive: false }});
 
+/* ダブルタップズーム */
 let lastTap = 0;
+
 window.addEventListener("touchend", () => {{
   const now = Date.now();
   if (now - lastTap < 300) {{
@@ -362,6 +387,7 @@ def build_index(data):
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Viewer</title>
 
 <style>
@@ -404,12 +430,10 @@ input {{
   input {{
     width:95%;
     font-size:16px;
-    padding:12px;
   }}
 
   .grid {{
     grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-    gap:12px;
   }}
 }}
 </style>
