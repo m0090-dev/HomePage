@@ -51,7 +51,6 @@ def scan():
 
     return data
 
-
 def make_detail_page(item):
     html = f"""
 <!DOCTYPE html>
@@ -83,6 +82,7 @@ body {{
   transform-origin:center;
 }}
 
+/* UI */
 .toolbar {{
   position:fixed;
   top:10px;
@@ -94,7 +94,11 @@ body {{
   display:flex;
   flex-direction:column;
   gap:6px;
-  width:200px;
+  width:220px;
+}}
+
+.toolbar.hidden {{
+  display:none;
 }}
 
 button {{
@@ -103,6 +107,7 @@ button {{
   border:none;
   padding:6px;
   cursor:pointer;
+  font-size:12px;
 }}
 
 button:hover {{
@@ -119,6 +124,14 @@ button:hover {{
   cursor:pointer;
   color:#fff;
   border-radius:6px;
+  font-size:12px;
+}}
+
+.info {{
+  font-size:12px;
+  line-height:1.4;
+  opacity:0.9;
+  margin-bottom:6px;
 }}
 </style>
 </head>
@@ -128,6 +141,11 @@ button:hover {{
 <div class="toggle" onclick="toggleUI()">UI</div>
 
 <div class="toolbar" id="ui">
+  <div class="info" id="info">
+    file: {item['name']}<br>
+    size: loading...
+  </div>
+
   <button onclick="zoom(1.1)">＋ zoom</button>
   <button onclick="zoom(0.9)">－ zoom</button>
   <button onclick="rotate(90)">rotate</button>
@@ -153,9 +171,20 @@ let last = {{x:0,y:0}};
 
 const img = document.getElementById("img");
 const wrap = document.getElementById("wrap");
+const ui = document.getElementById("ui");
+const info = document.getElementById("info");
 
 /* ------------------------
-   表示更新
+   画像情報
+------------------------ */
+img.onload = () => {{
+  info.innerHTML =
+    "file: {item['name']}<br>" +
+    "size: " + img.naturalWidth + " x " + img.naturalHeight;
+}};
+
+/* ------------------------
+   更新
 ------------------------ */
 function update() {{
   img.style.transform =
@@ -167,7 +196,7 @@ function update() {{
 }}
 
 /* ------------------------
-   操作系
+   操作
 ------------------------ */
 function zoom(v) {{
   scale *= v;
@@ -199,12 +228,9 @@ function reset() {{
 }}
 
 function toggleUI() {{
-  document.getElementById("ui").classList.toggle("hidden");
+  ui.classList.toggle("hidden");
 }}
 
-/* ------------------------
-   フルスクリーン
------------------------- */
 function toggleFull() {{
   if (!document.fullscreenElement) {{
     document.documentElement.requestFullscreen();
@@ -214,7 +240,7 @@ function toggleFull() {{
 }}
 
 /* ------------------------
-   マウスドラッグ
+   ドラッグ
 ------------------------ */
 wrap.addEventListener("mousedown", e => {{
   dragging = true;
@@ -241,32 +267,23 @@ window.addEventListener("mousemove", e => {{
    ホイールズーム
 ------------------------ */
 window.addEventListener("wheel", e => {{
-  const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-  scale *= zoomFactor;
+  const z = e.deltaY < 0 ? 1.1 : 0.9;
+  scale *= z;
   update();
 }});
 
 /* ------------------------
-   キーボード（← →）
+   キーボード
 ------------------------ */
-window.addEventListener("keydown", e => {{
-  if (e.key === "ArrowLeft") {{
-    navigate(-1);
-  }}
-  if (e.key === "ArrowRight") {{
-    navigate(1);
-  }}
-  if (e.key === "f") {{
-    toggleFull();
-  }}
-}});
-
-/* ------------------------
-   画像切り替え（簡易版）
------------------------- */
-const files = {json.dumps(os.listdir(BASE), ensure_ascii=False)};
+const files = {json.dumps(sorted(os.listdir(BASE)))};
 
 let current = files.indexOf("{item['name']}");
+
+window.addEventListener("keydown", e => {{
+  if (e.key === "ArrowLeft") navigate(-1);
+  if (e.key === "ArrowRight") navigate(1);
+  if (e.key === "f") toggleFull();
+}});
 
 function navigate(dir) {{
   current += dir;
@@ -277,7 +294,7 @@ function navigate(dir) {{
 }}
 
 /* ------------------------
-   タッチ対応（スマホ）
+   タッチ
 ------------------------ */
 let touches = [];
 
@@ -287,27 +304,25 @@ window.addEventListener("touchstart", e => {{
 
 window.addEventListener("touchmove", e => {{
   if (e.touches.length == 1) {{
-    // ドラッグ
     let t = e.touches[0];
+
     pos.x += t.clientX - (touches[0]?.clientX || 0);
     pos.y += t.clientY - (touches[0]?.clientY || 0);
+
     update();
   }}
 
   if (e.touches.length == 2) {{
-    // ピンチズーム
     let dx = e.touches[0].clientX - e.touches[1].clientX;
     let dy = e.touches[0].clientY - e.touches[1].clientY;
     let dist = Math.sqrt(dx*dx + dy*dy);
 
-    if (touches.length == 2) {{
-      let odx = touches[0].clientX - touches[1].clientX;
-      let ody = touches[0].clientY - touches[1].clientY;
-      let odist = Math.sqrt(odx*odx + ody*ody);
+    let odx = touches[0].clientX - touches[1].clientX;
+    let ody = touches[0].clientY - touches[1].clientY;
+    let odist = Math.sqrt(odx*odx + ody*ody);
 
-      scale *= dist / odist;
-      update();
-    }}
+    scale *= dist / odist;
+    update();
   }}
 
   touches = e.touches;
@@ -323,6 +338,7 @@ update();
     path = f"{OUT_DIR}/{item['name']}.html"
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
+
 
 
 # ----------------------------
