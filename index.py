@@ -94,6 +94,7 @@ def make_detail_page(item):
 <title>{item['name']}</title>
 
 <style>
+
 body {{
   margin:0;
   background:#111;
@@ -156,6 +157,13 @@ pre {{
   padding:10px;
   cursor:pointer;
 }}
+body.hide-ui .toolbar {{
+  display: none;
+}}
+
+body.hide-ui .toggle {{
+  opacity: 0.3;
+}}
 </style>
 </head>
 
@@ -164,6 +172,7 @@ pre {{
 
     if is_image:
         html += f"""
+<div class="toggle" onclick="toggleUI()">UI</div>
 <div class="toolbar">
   <div class="info">{item['name']}</div>
   <button onclick="zoom(1.1)">＋</button>
@@ -179,6 +188,10 @@ pre {{
 <script>
 let scale=1, rot=0;
 const img=document.getElementById("img");
+
+function toggleUI() {{
+  document.body.classList.toggle("hide-ui");
+}}
 
 function update(){{
   img.style.transform=`scale(${{scale}}) rotate(${{rot}}deg)`;
